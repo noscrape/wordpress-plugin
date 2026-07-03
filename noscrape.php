@@ -20,4 +20,4 @@ defined('ABSPATH') || exit;
 
 require __DIR__.'/vendor/autoload.php';
 
-new Noscrape\WordPress\Plugin()->boot();
+(new Noscrape\WordPress\Plugin())->boot();

@@ -6,6 +6,7 @@ namespace Noscrape\WordPress;
 
 use Noscrape\WordPress\Admin\SettingsPage;
 use Noscrape\WordPress\Config\Config;
+use Noscrape\WordPress\Integrations\WooCommerce\WooCommerce;
 use Noscrape\WordPress\Output\OutputBuffer;
 use Noscrape\WordPress\Output\Replacer;
 use Noscrape\WordPress\Shortcodes\NoscrapeShortcode;
@@ -23,6 +24,8 @@ final readonly class Plugin
         (new OutputBuffer(fn(string $html) => $this->render($html),))->boot();
 
         (new NoscrapeShortcode())->boot();
+
+        (new WooCommerce())->boot();
     }
 
     private function render(string $html): string
