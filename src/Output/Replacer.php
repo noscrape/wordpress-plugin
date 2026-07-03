@@ -4,21 +4,15 @@ declare(strict_types=1);
 
 namespace Noscrape\WordPress\Output;
 
-use Noscrape\WordPress\Api\Client;
-use Noscrape\WordPress\Config\Config;
+use Noscrape\WordPress\Api\Exceptions\ApiException;
+use Noscrape\WordPress\Api\Exceptions\AuthenticationException;
+use Noscrape\WordPress\Api\Exceptions\ConnectionException;
+use Noscrape\WordPress\Api\Exceptions\InvalidResponseException;
+use Noscrape\WordPress\Api\Exceptions\RateLimitException;
 use Noscrape\WordPress\Support\Container;
 
 final readonly class Replacer
 {
-    private Client $client;
-
-    public function __construct()
-    {
-        $this->client = new Client(
-            new Config(),
-        );
-    }
-
     public function replace(string $html): string
     {
         $collector = Container::collector();
@@ -27,11 +21,55 @@ final readonly class Replacer
             return $html;
         }
 
-        $response = $this->client->obfuscate(
-            $collector->items(),
-        );
+        try {
+            $response = Container::client()->obfuscate(
+                $collector->items(),
+            );
+        } catch (RateLimitException $e) {
+            $this->storeNotice(
+                'warning',
+                __('The Noscrape API rate limit has been reached. Your website is temporarily being served without obfuscation.', 'noscrape'),
+            );
 
-        $family = 'noscrape';
+            return $this->restoreOriginalContent($html);
+        } catch (AuthenticationException $e) {
+            $this->storeNotice(
+                'error',
+                __('Authentication with the Noscrape API failed. Please verify your API key.', 'noscrape'),
+            );
+
+            return $this->restoreOriginalContent($html);
+        } catch (ConnectionException $e) {
+            $this->storeNotice(
+                'error',
+                __('The Noscrape API could not be reached. Please check your internet connection or try again later.', 'noscrape'),
+            );
+
+            return $this->restoreOriginalContent($html);
+        } catch (InvalidResponseException $e) {
+            $this->storeNotice(
+                'error',
+                __('The Noscrape API returned an invalid response.', 'noscrape'),
+            );
+
+            return $this->restoreOriginalContent($html);
+        } catch (ApiException $e) {
+            $this->storeNotice(
+                'error',
+                sprintf(
+                    __('The Noscrape API returned HTTP %d.', 'noscrape'),
+                    $e->status,
+                ),
+            );
+
+            return $this->restoreOriginalContent($html);
+        }
+
+        $family = 'noscrape-' . substr(
+            sha1($response['font']),
+            0,
+            8,
+        );
 
         foreach ($response['data']['items'] as $id => $encoded) {
             $replacement = sprintf(
@@ -49,19 +87,18 @@ final readonly class Replacer
 
         $style = sprintf(
             '<style>
-                @font-face{
-                    font-family:%1$s;
-                    src:url(data:font/%2$s;base64,%3$s);
-                    font-display:block;
-                }
-
-                .noscrape{
-                    font-family:%1$s;
-                    font-style:normal;
-                    font-weight:400;
-                    white-space:pre-wrap;
-                }
-            </style>',
+@font-face{
+    font-family:%1$s;
+    src:url(data:font/%2$s;base64,%3$s);
+    font-display:block;
+}
+.noscrape{
+    font-family:%1$s;
+    font-style:normal;
+    font-weight:400;
+    white-space:pre-wrap;
+}
+</style>',
             $family,
             $response['format'],
             $response['font'],
@@ -76,5 +113,33 @@ final readonly class Replacer
         }
 
         return $style . $html;
+    }
+
+    private function restoreOriginalContent(string $html): string
+    {
+        foreach (Container::collector()->items() as $id => $text) {
+            $html = str_replace(
+                "<!-- noscrape:{$id} -->",
+                esc_html($text),
+                $html,
+            );
+        }
+
+        return $html;
+    }
+
+    private function storeNotice(string $type, string $message): void
+    {
+        error_log($message);
+
+        set_transient(
+            'noscrape_admin_notice',
+            [
+                'type' => $type,
+                'time' => time(),
+                'message' => $message,
+            ],
+            300,
+        );
     }
 }

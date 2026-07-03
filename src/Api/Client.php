@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Noscrape\WordPress\Api;
 
+use Noscrape\WordPress\Api\Exceptions\ApiException;
+use Noscrape\WordPress\Api\Exceptions\AuthenticationException;
+use Noscrape\WordPress\Api\Exceptions\ConnectionException;
+use Noscrape\WordPress\Api\Exceptions\InvalidResponseException;
+use Noscrape\WordPress\Api\Exceptions\RateLimitException;
 use Noscrape\WordPress\Config\Config;
-use RuntimeException;
 
 final readonly class Client
 {
@@ -35,19 +39,26 @@ final readonly class Client
         );
 
         if (is_wp_error($response)) {
-            throw new RuntimeException($response->get_error_message());
+            throw new ConnectionException(
+                $response->get_error_message(),
+            );
         }
 
         $status = wp_remote_retrieve_response_code($response);
 
-        if ($status >= 400) {
-            throw new RuntimeException(
-                sprintf(
-                    'Noscrape API returned HTTP %d.',
-                    $status,
+        match ($status) {
+            200 => null,
+            401, 403 => throw new AuthenticationException(),
+            429 => throw new RateLimitException(
+                (int) wp_remote_retrieve_header(
+                    $response,
+                    'Retry-After',
                 ),
-            );
-        }
+            ),
+            default => $status >= 400
+                ? throw new ApiException($status)
+                : null,
+        };
 
         /** @var array|null $json */
         $json = json_decode(
@@ -56,9 +67,7 @@ final readonly class Client
         );
 
         if (!is_array($json)) {
-            throw new RuntimeException(
-                'Invalid API response.',
-            );
+            throw new InvalidResponseException();
         }
 
         return $json;

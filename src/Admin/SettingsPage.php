@@ -10,13 +10,19 @@ final readonly class SettingsPage
 {
     public function __construct(
         private Config $config,
-    ) {
+    )
+    {
     }
 
     public function boot(): void
     {
         add_action('admin_menu', [$this, 'registerPage']);
         add_action('admin_init', [$this, 'registerSettings']);
+
+        add_action(
+            'admin_notices',
+            [$this, 'adminNotices'],
+        );
     }
 
     public function registerPage(): void
@@ -108,5 +114,25 @@ final readonly class SettingsPage
             checked($this->config->cacheEnabled(), true, false),
             esc_html__('Cache obfuscated responses', 'noscrape'),
         );
+    }
+
+    public function adminNotices(): void
+    {
+        $notice = get_transient('noscrape_admin_notice');
+
+        if (!is_array($notice)) {
+            return;
+        }
+
+        delete_transient('noscrape_admin_notice');
+
+        ?>
+        <div class="notice notice-error is-dismissible">
+            <p>
+                <strong>Noscrape:</strong>
+                <?= esc_html($notice['message']) ?>
+            </p>
+        </div>
+        <?php
     }
 }
