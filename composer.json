@@ -1,0 +1,20 @@
+{
+  "name": "noscrape/wordpress",
+  "description": "WordPress plugin for Noscrape server-side obfuscation.",
+  "type": "wordpress-plugin",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Bernhard Schönberger",
+      "homepage": "https://noscrape.eu"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Noscrape\\WordPress\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=8.2"
+  }
+}
