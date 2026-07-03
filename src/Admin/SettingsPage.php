@@ -18,11 +18,7 @@ final readonly class SettingsPage
     {
         add_action('admin_menu', [$this, 'registerPage']);
         add_action('admin_init', [$this, 'registerSettings']);
-
-        add_action(
-            'admin_notices',
-            [$this, 'adminNotices'],
-        );
+        add_action('admin_notices', [$this, 'adminNotices']);
     }
 
     public function registerPage(): void
@@ -41,6 +37,8 @@ final readonly class SettingsPage
         register_setting('noscrape', 'noscrape_api_key');
         register_setting('noscrape', 'noscrape_host');
         register_setting('noscrape', 'noscrape_cache');
+        register_setting('noscrape', 'noscrape_shortcodes');
+        register_setting('noscrape', 'noscrape_woocommerce');
 
         add_settings_section(
             'noscrape_general',
@@ -64,6 +62,31 @@ final readonly class SettingsPage
             'noscrape',
             'noscrape_general',
         );
+
+        add_settings_section(
+            'noscrape_integrations',
+            __('Integrations', 'noscrape'),
+            '__return_false',
+            'noscrape',
+        );
+
+        add_settings_field(
+            'noscrape_shortcodes',
+            __('Shortcodes', 'noscrape'),
+            [$this, 'renderShortcodesField'],
+            'noscrape',
+            'noscrape_integrations',
+        );
+
+        if (class_exists('WooCommerce')) {
+            add_settings_field(
+                'noscrape_woocommerce',
+                __('WooCommerce', 'noscrape'),
+                [$this, 'renderWooCommerceField'],
+                'noscrape',
+                'noscrape_integrations',
+            );
+        }
     }
 
     public function render(): void
@@ -89,7 +112,20 @@ final readonly class SettingsPage
             '<input class="regular-text" type="password" name="noscrape_api_key" value="%s">',
             esc_attr($this->config->apiKey() ?? ''),
         );
+
+        echo '<p class="description">';
+        esc_html_e('Enter your Noscrape API key.', 'noscrape');
+        echo '<br><br>';
+        echo '<a href="https://noscrape.eu" target="_blank" rel="noopener noreferrer">';
+        esc_html_e('Get your API key', 'noscrape');
+        echo '</a>';
+        echo ' &middot; ';
+        echo '<a href="https://noscrape.eu/docs" target="_blank" rel="noopener noreferrer">';
+        esc_html_e('Documentation', 'noscrape');
+        echo '</a>';
+        echo '</p>';
     }
+
 
     public function renderHostField(): void
     {
@@ -97,8 +133,29 @@ final readonly class SettingsPage
             '<input class="regular-text" type="url" name="noscrape_host" value="%s" placeholder="https://api.noscrape.eu">',
             esc_attr($this->config->host() ?? ''),
         );
+
+        echo '<p class="description">';
+        esc_html_e('Leave empty to use the official Noscrape API.', 'noscrape');
+        echo '</p>';
     }
 
+    public function renderShortcodesField(): void
+    {
+        printf(
+            '<label><input type="checkbox" name="noscrape_shortcodes" value="1" %s> %s</label>',
+            checked((bool)get_option('noscrape_shortcodes', true), true, false),
+            esc_html__('Enable shortcode integration.', 'noscrape'),
+        );
+    }
+
+    public function renderWooCommerceField(): void
+    {
+        printf(
+            '<label><input type="checkbox" name="noscrape_woocommerce" value="1" %s> %s</label>',
+            checked((bool)get_option('noscrape_woocommerce', true), true, false),
+            esc_html__('Automatically obfuscate WooCommerce prices.', 'noscrape'),
+        );
+    }
 
     public function adminNotices(): void
     {
@@ -110,11 +167,15 @@ final readonly class SettingsPage
 
         delete_transient('noscrape_admin_notice');
 
+        $type = in_array($notice['type'] ?? '', ['error', 'warning', 'success', 'info'], true)
+            ? $notice['type']
+            : 'error';
+
         ?>
-        <div class="notice notice-error is-dismissible">
+        <div class="notice notice-<?php echo esc_attr($type); ?> is-dismissible">
             <p>
                 <strong>Noscrape:</strong>
-                <?= esc_html($notice['message']) ?>
+                <?php echo esc_html($notice['message']); ?>
             </p>
         </div>
         <?php

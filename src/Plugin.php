@@ -15,7 +15,9 @@ final readonly class Plugin
 {
     public function __construct(
         private Config $config = new Config(),
-    ) { }
+    )
+    {
+    }
 
     public function boot(): void
     {
@@ -23,9 +25,13 @@ final readonly class Plugin
 
         (new OutputBuffer(fn(string $html) => $this->render($html),))->boot();
 
-        (new NoscrapeShortcode())->boot();
+        if ($this->config->shortcodesEnabled()) {
+            (new NoscrapeShortcode())->boot();
+        }
 
-        (new WooCommerce())->boot();
+        if ($this->config->woocommerceEnabled()) {
+            (new WooCommerce())->boot();
+        }
     }
 
     private function render(string $html): string

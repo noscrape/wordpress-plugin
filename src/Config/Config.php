@@ -4,27 +4,59 @@ declare(strict_types=1);
 
 namespace Noscrape\WordPress\Config;
 
-final readonly class Config
+final class Config
 {
     public function apiKey(): ?string
     {
-        return $this->get('api_key');
+        return $this->stringOption('noscrape_api_key');
     }
 
     public function host(): ?string
     {
-        return $this->get('host');
+        return $this->stringOption('noscrape_host');
     }
 
     public function cacheEnabled(): bool
     {
-        return (bool) $this->get('cache', true);
+        return $this->boolOption(
+            'noscrape_cache',
+            true,
+        );
     }
 
-    private function get(string $key, mixed $default = null): mixed
+    public function shortcodesEnabled(): bool
     {
-        return get_option(
-            "noscrape_{$key}",
+        return $this->boolOption(
+            'noscrape_shortcodes',
+            true,
+        );
+    }
+
+    public function woocommerceEnabled(): bool
+    {
+        return $this->boolOption(
+            'noscrape_woocommerce',
+            true,
+        );
+    }
+
+    private function stringOption(string $key): ?string
+    {
+        $value = get_option($key);
+
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        return trim($value);
+    }
+
+    private function boolOption(
+        string $key,
+        bool $default = false,
+    ): bool {
+        return (bool) get_option(
+            $key,
             $default,
         );
     }
