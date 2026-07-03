@@ -64,14 +64,6 @@ final readonly class SettingsPage
             'noscrape',
             'noscrape_general',
         );
-
-        add_settings_field(
-            'noscrape_cache',
-            __('Enable Cache', 'noscrape'),
-            [$this, 'renderCacheField'],
-            'noscrape',
-            'noscrape_general',
-        );
     }
 
     public function render(): void
@@ -107,14 +99,6 @@ final readonly class SettingsPage
         );
     }
 
-    public function renderCacheField(): void
-    {
-        printf(
-            '<label><input type="checkbox" name="noscrape_cache" value="1" %s> %s</label>',
-            checked($this->config->cacheEnabled(), true, false),
-            esc_html__('Cache obfuscated responses', 'noscrape'),
-        );
-    }
 
     public function adminNotices(): void
     {
