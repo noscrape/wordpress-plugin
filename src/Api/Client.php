@@ -15,7 +15,8 @@ final readonly class Client
 {
     public function __construct(
         private Config $config,
-    ) {
+    )
+    {
     }
 
     public function obfuscate(array $items, ?string $font = null): array
@@ -38,10 +39,9 @@ final readonly class Client
             ],
         );
 
-        if (is_wp_error($response)) {
-            throw new ConnectionException(
-                $response->get_error_message(),
-            );
+        if ($response instanceof \WP_Error) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- False positive. WP_Error message is not output.
+            throw new ConnectionException($response->get_error_message(),);
         }
 
         $status = wp_remote_retrieve_response_code($response);
@@ -50,12 +50,13 @@ final readonly class Client
             200 => null,
             401, 403 => throw new AuthenticationException(),
             429 => throw new RateLimitException(
-                (int) wp_remote_retrieve_header(
+                (int)wp_remote_retrieve_header(
                     $response,
                     'Retry-After',
                 ),
             ),
             default => $status >= 400
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- False positive. WP_Error message is not output.
                 ? throw new ApiException($status)
                 : null,
         };

@@ -55,7 +55,7 @@ final readonly class WooCommerce
             static function (array $matches): string {
                 $text = trim(
                     html_entity_decode(
-                        strip_tags($matches[1]),
+                        wp_strip_all_tags($matches[1]),
                         ENT_QUOTES | ENT_HTML5,
                         get_bloginfo('charset') ?: 'UTF-8',
                     ),

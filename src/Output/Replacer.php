@@ -57,6 +57,7 @@ final readonly class Replacer
             $this->storeNotice(
                 'error',
                 sprintf(
+                    /* translators: %d: HTTP status code returned by the Noscrape API. */
                     __('The Noscrape API returned HTTP %d.', 'noscrape'),
                     $e->status,
                 ),
@@ -130,8 +131,6 @@ final readonly class Replacer
 
     private function storeNotice(string $type, string $message): void
     {
-        error_log($message);
-
         set_transient(
             'noscrape_admin_notice',
             [

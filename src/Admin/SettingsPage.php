@@ -10,8 +10,7 @@ final readonly class SettingsPage
 {
     public function __construct(
         private Config $config,
-    )
-    {
+    ) {
     }
 
     public function boot(): void
@@ -34,11 +33,29 @@ final readonly class SettingsPage
 
     public function registerSettings(): void
     {
-        register_setting('noscrape', 'noscrape_api_key');
-        register_setting('noscrape', 'noscrape_host');
-        register_setting('noscrape', 'noscrape_cache');
-        register_setting('noscrape', 'noscrape_shortcodes');
-        register_setting('noscrape', 'noscrape_woocommerce');
+        register_setting('noscrape', 'noscrape_api_key', [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => '',
+        ]);
+
+        register_setting('noscrape', 'noscrape_host', [
+            'type' => 'string',
+            'sanitize_callback' => [$this, 'sanitizeHost'],
+            'default' => '',
+        ]);
+
+        register_setting('noscrape', 'noscrape_shortcodes', [
+            'type' => 'boolean',
+            'sanitize_callback' => [$this, 'sanitizeCheckbox'],
+            'default' => true,
+        ]);
+
+        register_setting('noscrape', 'noscrape_woocommerce', [
+            'type' => 'boolean',
+            'sanitize_callback' => [$this, 'sanitizeCheckbox'],
+            'default' => true,
+        ]);
 
         add_settings_section(
             'noscrape_general',
@@ -89,6 +106,26 @@ final readonly class SettingsPage
         }
     }
 
+    public function sanitizeHost(mixed $value): string
+    {
+        if (!is_string($value)) {
+            return '';
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        return esc_url_raw($value);
+    }
+
+    public function sanitizeCheckbox(mixed $value): bool
+    {
+        return $value === '1' || $value === 1 || $value === true || $value === 'true';
+    }
+
     public function render(): void
     {
         ?>
@@ -126,7 +163,6 @@ final readonly class SettingsPage
         echo '</p>';
     }
 
-
     public function renderHostField(): void
     {
         printf(
@@ -143,7 +179,7 @@ final readonly class SettingsPage
     {
         printf(
             '<label><input type="checkbox" name="noscrape_shortcodes" value="1" %s> %s</label>',
-            checked((bool)get_option('noscrape_shortcodes', true), true, false),
+            checked($this->config->shortcodesEnabled(), true, false),
             esc_html__('Enable shortcode integration.', 'noscrape'),
         );
     }
@@ -152,7 +188,7 @@ final readonly class SettingsPage
     {
         printf(
             '<label><input type="checkbox" name="noscrape_woocommerce" value="1" %s> %s</label>',
-            checked((bool)get_option('noscrape_woocommerce', true), true, false),
+            checked($this->config->woocommerceEnabled(), true, false),
             esc_html__('Automatically obfuscate WooCommerce prices.', 'noscrape'),
         );
     }
@@ -175,7 +211,7 @@ final readonly class SettingsPage
         <div class="notice notice-<?php echo esc_attr($type); ?> is-dismissible">
             <p>
                 <strong>Noscrape:</strong>
-                <?php echo esc_html($notice['message']); ?>
+                <?php echo esc_html((string) ($notice['message'] ?? '')); ?>
             </p>
         </div>
         <?php
