@@ -58,6 +58,20 @@ The plugin supports the following settings:
 
 ---
 
+## External service and privacy
+
+Noscrape sends only content marked for obfuscation to `https://api.noscrape.eu/obfuscate`,
+unless you configure a custom API host. This may include shortcode content, email addresses,
+phone numbers, and WooCommerce price text. An API key is optional; the free tier allows up to
+10 requests per minute without one.
+
+- [Service documentation](https://noscrape.eu/docs)
+- [Terms of service](https://noscrape.eu/de/terms)
+- [Privacy policy](https://noscrape.eu/de/privacy)
+- [Legal notice](https://noscrape.eu/de/imprint)
+
+---
+
 ## Shortcodes
 
 Protect arbitrary content using the built-in shortcode.

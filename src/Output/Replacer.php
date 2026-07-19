@@ -24,15 +24,6 @@ final readonly class Replacer
         }
 
         try {
-            if (Container::config()->apiKey() === null) {
-                $this->storeNotice(
-                    'warning',
-                    __('Noscrape is active, but no API key is configured. Content is currently being served without obfuscation.', 'noscrape'),
-                );
-
-                return $this->restoreOriginalContent($collector, $html);
-            }
-
             $response = Container::client()->obfuscate($collector->items());
         } catch (RateLimitException $e) {
             $this->storeNotice(
@@ -92,7 +83,7 @@ final readonly class Replacer
             $replacement = sprintf(
                 '<span class="noscrape" style="font-family:%s">%s</span>',
                 esc_attr($family),
-                $encoded,
+                esc_html($encoded),
             );
 
             $html = str_replace(

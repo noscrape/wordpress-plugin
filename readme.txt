@@ -25,9 +25,10 @@ Current features include:
 * Graceful fallback if the API is unavailable
 * WooCommerce integration
 * Shortcode support
-* No JavaScript required
+* No JavaScript required on the public site
 
-A Noscrape account and API key are required.
+The free tier works without an API key and allows up to 10 requests per minute.
+An API key is optional.
 
 https://noscrape.eu
 
@@ -36,14 +37,32 @@ https://noscrape.eu
 1. Upload the plugin to `/wp-content/plugins/` or install it through the WordPress plugin installer.
 2. Activate the plugin.
 3. Open **Settings → Noscrape**.
-4. Enter your Noscrape API key.
+4. Optionally enter your Noscrape API key.
 5. Save the settings.
+
+== External service and privacy ==
+
+Noscrape uses the Noscrape API to create the obfuscated text and font used on your site.
+When content is marked for obfuscation, only that content is sent to
+`https://api.noscrape.eu/obfuscate`, unless you configure a custom API host. Depending on
+the enabled features, this can include shortcode content, email addresses, phone numbers,
+and WooCommerce price text. If configured, the API key is sent with the request for
+authentication.
+
+No content is sent when there is nothing to obfuscate. The free tier does not require an
+API key and is limited to 10 requests per minute.
+
+Service documentation: https://noscrape.eu/docs
+Terms of service: https://noscrape.eu/en/terms
+Privacy policy: https://noscrape.eu/en/privacy
+Legal notice: https://noscrape.eu/en/imprint
 
 == Frequently Asked Questions ==
 
 = Do I need a Noscrape account? =
 
-Yes. You need an API key which you can obtain from https://noscrape.eu.
+No. The free tier works without an API key and is limited to 10 requests per minute. You
+can optionally use an API key from https://noscrape.eu.
 
 = Does the original content appear in the page source? =
 
@@ -63,9 +82,8 @@ The plugin automatically falls back to the original content so your website alwa
 
 == Screenshots ==
 
-1. Plugin settings
-2. WooCommerce price protection
-3. Shortcode example
+1. WooCommerce sale-price HTML with visible and screen-reader price text obfuscated.
+2. Plain text compared with its obfuscated HTML output.
 
 == Changelog ==
 
