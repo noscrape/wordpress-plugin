@@ -29,12 +29,31 @@ jobs:
       - name: Run unit tests
         run: composer test
 
+      - name: Verify version consistency
+        run: |
+          PLUGIN_VERSION=$(grep -Po '(?<=Version:\s).*' noscrape.php | head -1 | xargs)
+          STABLE_TAG=$(grep -Po '(?<=Stable tag:\s).*' readme.txt | head -1 | xargs)
+
+          echo "Plugin version: $PLUGIN_VERSION"
+          echo "Stable tag:     $STABLE_TAG"
+
+          test "$PLUGIN_VERSION" = "$STABLE_TAG"
+
       - name: Build production package
         run: |
           rm -rf build noscrape.zip
           mkdir -p build/noscrape
+
           cp -R src build/noscrape/
-          cp noscrape.php readme.txt LICENSE build/noscrape/
+
+          cp \
+            noscrape.php \
+            readme.txt \
+            LICENSE \
+            composer.json \
+            composer.lock \
+            build/noscrape/
+
           COMPOSER_VENDOR_DIR=build/noscrape/vendor composer install \
             --no-dev \
             --optimize-autoloader \
@@ -42,8 +61,11 @@ jobs:
             --no-interaction \
             --no-progress \
             --prefer-dist
+
           find build/noscrape -type d -empty -delete
+
           test -f build/noscrape/vendor/autoload.php
+
           (
             cd build
             zip -q -r ../noscrape.zip noscrape
@@ -52,10 +74,30 @@ jobs:
       - name: Verify production package
         run: |
           unzip -t noscrape.zip
-          if unzip -Z1 noscrape.zip | grep -Eq '(^|/)(\.git|\.github|tests)(/|$)|(^|/)(composer\.(json|lock)|phpunit\.xml\.dist|README\.md|\.gitignore)$'; then
-            echo 'The production package contains development files.'
+
+          echo "Checking for forbidden files..."
+
+          if unzip -Z1 noscrape.zip | grep -Eq \
+            '(^|/)(\.git|\.github|tests|node_modules|build)(/|$)|(^|/)(phpunit\.xml(\.dist)?|README\.md|\.gitignore|\.DS_Store)$'
+          then
+            echo "The production package contains development files."
             exit 1
           fi
+
+          echo "Checking for nested ZIP files..."
+
+          if unzip -Z1 noscrape.zip | grep -Eq '\.zip$'
+          then
+            echo "Nested ZIP files are not allowed."
+            exit 1
+          fi
+
+          echo "Checking required files..."
+
+          unzip -Z1 noscrape.zip | grep -q '^noscrape/composer\.json$'
+          unzip -Z1 noscrape.zip | grep -q '^noscrape/readme\.txt$'
+          unzip -Z1 noscrape.zip | grep -q '^noscrape/noscrape\.php$'
+          unzip -Z1 noscrape.zip | grep -q '^noscrape/vendor/autoload\.php$'
 
       - name: Upload production package
         uses: actions/upload-artifact@v4

@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Plugin Name:       Noscrape
  * Plugin URI:        https://noscrape.eu
  * Description:       Protect email addresses, phone numbers, prices and other sensitive content from scraping bots using server-side obfuscation.
- * Version:           0.1.2
+ * Version:           0.1.3
  * Requires at least: 6.8
  * Requires PHP:      8.2
  * Author:            Bernhard Schönberger
