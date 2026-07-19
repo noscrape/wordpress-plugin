@@ -11,6 +11,11 @@ final class Collector
      */
     private array $items = [];
 
+    /**
+     * @var array<string, string>
+     */
+    private array $lookup = [];
+
     private int $counter = 0;
 
     public function add(string $text): string
@@ -24,7 +29,7 @@ final class Collector
         $this->items[$id] = $text;
         $this->lookup[$text] = $id;
 
-        return "<!-- noscrape:{$id} -->";
+        return "<!-- noscrape:$id -->";
     }
 
     /**
@@ -43,6 +48,7 @@ final class Collector
     public function clear(): void
     {
         $this->items = [];
+        $this->lookup = [];
         $this->counter = 0;
     }
 }

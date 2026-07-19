@@ -130,10 +130,10 @@ https://noscrape.eu/docs
 
 Issues
 
-https://github.com/noscrape/noscrape-wordpress/issues
+https://github.com/noscrape/wordpress-plugin/issues
 
 ---
 
 ## License
 
-MIT
+GPL-2.0-or-later

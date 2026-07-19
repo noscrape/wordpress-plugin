@@ -9,6 +9,8 @@ use Noscrape\WordPress\Api\Exceptions\AuthenticationException;
 use Noscrape\WordPress\Api\Exceptions\ConnectionException;
 use Noscrape\WordPress\Api\Exceptions\InvalidResponseException;
 use Noscrape\WordPress\Api\Exceptions\RateLimitException;
+use Noscrape\WordPress\Api\ObfuscationResponse;
+use Noscrape\WordPress\Collector\Collector;
 use Noscrape\WordPress\Support\Container;
 
 final readonly class Replacer
@@ -22,37 +24,44 @@ final readonly class Replacer
         }
 
         try {
-            $response = Container::client()->obfuscate(
-                $collector->items(),
-            );
+            if (Container::config()->apiKey() === null) {
+                $this->storeNotice(
+                    'warning',
+                    __('Noscrape is active, but no API key is configured. Content is currently being served without obfuscation.', 'noscrape'),
+                );
+
+                return $this->restoreOriginalContent($collector, $html);
+            }
+
+            $response = Container::client()->obfuscate($collector->items());
         } catch (RateLimitException $e) {
             $this->storeNotice(
                 'warning',
                 __('The Noscrape API rate limit has been reached. Your website is temporarily being served without obfuscation.', 'noscrape'),
             );
 
-            return $this->restoreOriginalContent($html);
+            return $this->restoreOriginalContent($collector, $html);
         } catch (AuthenticationException $e) {
             $this->storeNotice(
                 'error',
                 __('Authentication with the Noscrape API failed. Please verify your API key.', 'noscrape'),
             );
 
-            return $this->restoreOriginalContent($html);
+            return $this->restoreOriginalContent($collector, $html);
         } catch (ConnectionException $e) {
             $this->storeNotice(
                 'error',
                 __('The Noscrape API could not be reached. Please check your internet connection or try again later.', 'noscrape'),
             );
 
-            return $this->restoreOriginalContent($html);
+            return $this->restoreOriginalContent($collector, $html);
         } catch (InvalidResponseException $e) {
             $this->storeNotice(
                 'error',
                 __('The Noscrape API returned an invalid response.', 'noscrape'),
             );
 
-            return $this->restoreOriginalContent($html);
+            return $this->restoreOriginalContent($collector, $html);
         } catch (ApiException $e) {
             $this->storeNotice(
                 'error',
@@ -63,16 +72,23 @@ final readonly class Replacer
                 ),
             );
 
-            return $this->restoreOriginalContent($html);
+            return $this->restoreOriginalContent($collector, $html);
+        } finally {
+            $collector->clear();
         }
 
+        return $this->replacePlaceholders($html, $response);
+    }
+
+    private function replacePlaceholders(string $html, ObfuscationResponse $response): string
+    {
         $family = 'noscrape-' . substr(
-            sha1($response['font']),
+            sha1($response->font),
             0,
             8,
         );
 
-        foreach ($response['data']['items'] as $id => $encoded) {
+        foreach ($response->items as $id => $encoded) {
             $replacement = sprintf(
                 '<span class="noscrape" style="font-family:%s">%s</span>',
                 esc_attr($family),
@@ -90,7 +106,7 @@ final readonly class Replacer
             '<style>
 @font-face{
     font-family:%1$s;
-    src:url(data:font/%2$s;base64,%3$s);
+    src:url(data:%2$s;base64,%3$s);
     font-display:block;
 }
 .noscrape{
@@ -101,8 +117,8 @@ final readonly class Replacer
 }
 </style>',
             $family,
-            $response['format'],
-            $response['font'],
+            $response->mimeType,
+            $response->font,
         );
 
         if (str_contains($html, '</head>')) {
@@ -116,9 +132,9 @@ final readonly class Replacer
         return $style . $html;
     }
 
-    private function restoreOriginalContent(string $html): string
+    private function restoreOriginalContent(Collector $collector, string $html): string
     {
-        foreach (Container::collector()->items() as $id => $text) {
+        foreach ($collector->items() as $id => $text) {
             $html = str_replace(
                 "<!-- noscrape:{$id} -->",
                 esc_html($text),

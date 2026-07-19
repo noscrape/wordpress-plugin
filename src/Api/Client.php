@@ -19,7 +19,7 @@ final readonly class Client
     {
     }
 
-    public function obfuscate(array $items, ?string $font = null): array
+    public function obfuscate(array $items, ?string $font = null): ObfuscationResponse
     {
         $body = [
             'items' => $items,
@@ -40,7 +40,6 @@ final readonly class Client
         );
 
         if ($response instanceof \WP_Error) {
-            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- False positive. WP_Error message is not output.
             throw new ConnectionException($response->get_error_message(),);
         }
 
@@ -71,7 +70,10 @@ final readonly class Client
             throw new InvalidResponseException();
         }
 
-        return $json;
+        return ObfuscationResponse::fromArray(
+            $json,
+            array_keys($items),
+        );
     }
 
     private function endpoint(): string

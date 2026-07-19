@@ -16,14 +16,6 @@ final class Config
         return $this->stringOption('noscrape_host');
     }
 
-    public function cacheEnabled(): bool
-    {
-        return $this->boolOption(
-            'noscrape_cache',
-            true,
-        );
-    }
-
     public function shortcodesEnabled(): bool
     {
         return $this->boolOption(

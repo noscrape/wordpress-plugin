@@ -51,11 +51,11 @@ final readonly class WooCommerce
         }
 
         return preg_replace_callback(
-            '/<bdi\b[^>]*>(.*?)<\/bdi>/is',
+            '/(<bdi\b[^>]*>)(.*?)(<\/bdi>)/is',
             static function (array $matches): string {
                 $text = trim(
                     html_entity_decode(
-                        wp_strip_all_tags($matches[1]),
+                        wp_strip_all_tags($matches[2]),
                         ENT_QUOTES | ENT_HTML5,
                         get_bloginfo('charset') ?: 'UTF-8',
                     ),
@@ -65,10 +65,7 @@ final readonly class WooCommerce
                     return $matches[0];
                 }
 
-                return sprintf(
-                    '<bdi>%s</bdi>',
-                    Container::collector()->add($text),
-                );
+                return $matches[1] . Container::collector()->add($text) . $matches[3];
             },
             $html,
         ) ?? $html;

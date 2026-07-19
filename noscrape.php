@@ -12,7 +12,7 @@ declare(strict_types=1);
  * Author:            Bernhard Schönberger
  * Author URI:        https://noscrape.eu
  * License:           GPL-2.0-or-later
- * License URI:       https://opensource.org/licenses/MIT
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       noscrape
  */
 
