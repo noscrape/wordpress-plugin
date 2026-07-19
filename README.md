@@ -54,6 +54,7 @@ The plugin supports the following settings:
 | Host | Optional custom API endpoint (On-Premise installations) |
 | Shortcodes | Enable shortcode integration |
 | WooCommerce | Automatically obfuscate WooCommerce prices |
+| Screen reader price text | Optionally obfuscate WooCommerce price text intended for screen readers; reduces accessibility |
 
 ---
 
@@ -84,6 +85,10 @@ Supported locations include:
 - Checkout
 
 No template modifications are required.
+
+WooCommerce publishes separate price text for screen readers. By default, this remains readable to
+preserve accessibility. Enable **Screen reader price text** only when protecting that text is more
+important than screen-reader price announcements.
 
 ---
 

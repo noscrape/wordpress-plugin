@@ -57,6 +57,12 @@ final readonly class SettingsPage
             'default' => true,
         ]);
 
+        register_setting('noscrape', 'noscrape_woocommerce_screen_reader_text', [
+            'type' => 'boolean',
+            'sanitize_callback' => [$this, 'sanitizeCheckbox'],
+            'default' => false,
+        ]);
+
         add_settings_section(
             'noscrape_general',
             __('General', 'noscrape'),
@@ -100,6 +106,14 @@ final readonly class SettingsPage
                 'noscrape_woocommerce',
                 __('WooCommerce', 'noscrape'),
                 [$this, 'renderWooCommerceField'],
+                'noscrape',
+                'noscrape_integrations',
+            );
+
+            add_settings_field(
+                'noscrape_woocommerce_screen_reader_text',
+                __('Screen reader price text', 'noscrape'),
+                [$this, 'renderWooCommerceScreenReaderTextField'],
                 'noscrape',
                 'noscrape_integrations',
             );
@@ -191,6 +205,19 @@ final readonly class SettingsPage
             checked($this->config->woocommerceEnabled(), true, false),
             esc_html__('Automatically obfuscate WooCommerce prices.', 'noscrape'),
         );
+    }
+
+    public function renderWooCommerceScreenReaderTextField(): void
+    {
+        printf(
+            '<label><input type="checkbox" name="noscrape_woocommerce_screen_reader_text" value="1" %s> %s</label>',
+            checked($this->config->woocommerceScreenReaderTextProtectionEnabled(), true, false),
+            esc_html__('Obfuscate WooCommerce price text for screen readers.', 'noscrape'),
+        );
+
+        echo '<p class="description">';
+        esc_html_e('This prevents price text from being exposed in the page source, but screen readers can no longer announce WooCommerce prices.', 'noscrape');
+        echo '</p>';
     }
 
     public function adminNotices(): void
