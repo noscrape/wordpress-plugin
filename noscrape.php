@@ -10,7 +10,7 @@ declare(strict_types=1);
  * Requires at least: 6.8
  * Requires PHP:      8.2
  * Author:            Bernhard Schönberger
- * Author URI:        https://noscrape.eu
+ * Author URI:        https://www.schoenberger.be/
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       noscrape
