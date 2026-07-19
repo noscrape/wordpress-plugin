@@ -1,0 +1,66 @@
+name: Build Release Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Install development dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Run unit tests
+        run: composer test
+
+      - name: Build production package
+        run: |
+          rm -rf build noscrape.zip
+          mkdir -p build/noscrape
+          cp -R src build/noscrape/
+          cp noscrape.php readme.txt LICENSE build/noscrape/
+          COMPOSER_VENDOR_DIR=build/noscrape/vendor composer install \
+            --no-dev \
+            --optimize-autoloader \
+            --classmap-authoritative \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist
+          find build/noscrape -type d -empty -delete
+          test -f build/noscrape/vendor/autoload.php
+          (
+            cd build
+            zip -q -r ../noscrape.zip noscrape
+          )
+
+      - name: Verify production package
+        run: |
+          unzip -t noscrape.zip
+          if unzip -Z1 noscrape.zip | grep -Eq '(^|/)(\.git|\.github|tests)(/|$)|(^|/)(composer\.(json|lock)|phpunit\.xml\.dist|README\.md|\.gitignore)$'; then
+            echo 'The production package contains development files.'
+            exit 1
+          fi
+
+      - name: Upload production package
+        uses: actions/upload-artifact@v4
+        with:
+          name: noscrape-production-package
+          path: noscrape.zip
+          if-no-files-found: error
+          retention-days: 30
