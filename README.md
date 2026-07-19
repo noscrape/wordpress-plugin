@@ -86,9 +86,9 @@ Supported locations include:
 
 No template modifications are required.
 
-WooCommerce publishes separate price text for screen readers. By default, this remains readable to
-preserve accessibility. Enable **Screen reader price text** only when protecting that text is more
-important than screen-reader price announcements.
+WooCommerce publishes separate price text for screen readers. **Screen reader price text** is
+enabled by default and protects that text alongside visible prices. Disable it when screen-reader
+price announcements are more important than preventing price disclosure in the page source.
 
 ---
 

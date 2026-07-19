@@ -60,7 +60,7 @@ final readonly class SettingsPage
         register_setting('noscrape', 'noscrape_woocommerce_screen_reader_text', [
             'type' => 'boolean',
             'sanitize_callback' => [$this, 'sanitizeCheckbox'],
-            'default' => false,
+            'default' => true,
         ]);
 
         add_settings_section(
@@ -110,13 +110,6 @@ final readonly class SettingsPage
                 'noscrape_integrations',
             );
 
-            add_settings_field(
-                'noscrape_woocommerce_screen_reader_text',
-                __('Screen reader price text', 'noscrape'),
-                [$this, 'renderWooCommerceScreenReaderTextField'],
-                'noscrape',
-                'noscrape_integrations',
-            );
         }
     }
 
@@ -201,23 +194,38 @@ final readonly class SettingsPage
     public function renderWooCommerceField(): void
     {
         printf(
-            '<label><input type="checkbox" name="noscrape_woocommerce" value="1" %s> %s</label>',
+            '<label><input id="noscrape_woocommerce" type="checkbox" name="noscrape_woocommerce" value="1" %s> %s</label>',
             checked($this->config->woocommerceEnabled(), true, false),
             esc_html__('Automatically obfuscate WooCommerce prices.', 'noscrape'),
         );
-    }
 
-    public function renderWooCommerceScreenReaderTextField(): void
-    {
+        echo '<p style="margin: 0.5em 0 0 1.5em;">';
         printf(
-            '<label><input type="checkbox" name="noscrape_woocommerce_screen_reader_text" value="1" %s> %s</label>',
+            '<label><input id="noscrape_woocommerce_screen_reader_text" type="checkbox" name="noscrape_woocommerce_screen_reader_text" value="1" %s %s> %s</label>',
             checked($this->config->woocommerceScreenReaderTextProtectionEnabled(), true, false),
+            disabled($this->config->woocommerceEnabled(), false, false),
             esc_html__('Obfuscate WooCommerce price text for screen readers.', 'noscrape'),
         );
 
-        echo '<p class="description">';
+        echo '<br><span class="description" style="padding-left: 1.5rem">';
         esc_html_e('This prevents price text from being exposed in the page source, but screen readers can no longer announce WooCommerce prices.', 'noscrape');
-        echo '</p>';
+        echo '</span></p>';
+
+        ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const woocommerce = document.getElementById('noscrape_woocommerce');
+                const screenReaderText = document.getElementById('noscrape_woocommerce_screen_reader_text');
+
+                const syncScreenReaderText = function () {
+                    screenReaderText.disabled = !woocommerce.checked;
+                };
+
+                woocommerce.addEventListener('change', syncScreenReaderText);
+                syncScreenReaderText();
+            });
+        </script>
+        <?php
     }
 
     public function adminNotices(): void

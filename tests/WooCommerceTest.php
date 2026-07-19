@@ -41,35 +41,30 @@ final class WooCommerceTest extends TestCase
         Container::reset();
     }
 
-    public function testScreenReaderPriceTextRemainsReadableByDefault(): void
+    public function testScreenReaderPriceTextIsProtectedByDefault(): void
     {
         $html = $this->priceHtml();
 
         $result = (new WooCommerce())->cartPriceHtml($html);
 
         self::assertStringContainsString('<!-- noscrape:ns_1 -->', $result);
-        self::assertStringContainsString('Aktueller Preis ist: 9,00&nbsp;€.', $result);
-        self::assertSame(
-            ['ns_1' => "9,00\xc2\xa0€"],
-            Container::collector()->items(),
-        );
+        self::assertStringNotContainsString('Aktueller Preis ist: 9,00&nbsp;€.', $result);
+        self::assertSame([
+            'ns_1' => "9,00\xc2\xa0€",
+            'ns_2' => "Aktueller Preis ist: 9,00\xc2\xa0€.",
+        ], Container::collector()->items());
     }
 
-    public function testScreenReaderPriceTextIsProtectedWhenEnabled(): void
+    public function testScreenReaderPriceTextIsNotProtectedWhenWooCommerceIsDisabled(): void
     {
+        $GLOBALS['noscrape_test_options']['noscrape_woocommerce'] = false;
         $GLOBALS['noscrape_test_options']['noscrape_woocommerce_screen_reader_text'] = true;
         $html = $this->priceHtml();
 
         $result = (new WooCommerce())->cartPriceHtml($html);
 
-        self::assertStringNotContainsString('Aktueller Preis ist: 9,00&nbsp;€.', $result);
-        self::assertSame(
-            [
-                'ns_1' => "9,00\xc2\xa0€",
-                'ns_2' => "Aktueller Preis ist: 9,00\xc2\xa0€.",
-            ],
-            Container::collector()->items(),
-        );
+        self::assertStringContainsString('Aktueller Preis ist: 9,00&nbsp;€.', $result);
+        self::assertSame(['ns_1' => "9,00\xc2\xa0€"], Container::collector()->items());
     }
 
     private function priceHtml(): string

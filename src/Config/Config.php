@@ -34,9 +34,11 @@ final class Config
 
     public function woocommerceScreenReaderTextProtectionEnabled(): bool
     {
-        return $this->boolOption(
-            'noscrape_woocommerce_screen_reader_text',
-        );
+        return $this->woocommerceEnabled()
+            && $this->boolOption(
+                'noscrape_woocommerce_screen_reader_text',
+                true,
+            );
     }
 
     private function stringOption(string $key): ?string
